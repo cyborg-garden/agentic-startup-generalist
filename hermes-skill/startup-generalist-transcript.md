@@ -1,6 +1,6 @@
 ---
 name: startup-generalist-transcript
-description: Turn any transcript or note into warm updates and candidate tasks on whatever surface the team already uses — source-agnostic ingestion, disciplined extraction, provenance you can trace back, and a human gate before anything lands on a live board. Use when asked to process a meeting, pull tasks out of a call, keep the board current from what was said, or wire a transcript source to a task surface.
+description: Turn any transcript or note into warm updates and candidate tasks on whatever surface the team already uses — source-agnostic ingestion, disciplined extraction, provenance you can trace back, and a human gate before anything lands on a live board. Use when asked to process a meeting, extract tasks from a call, keep the board current from what was said, or wire a transcript source to a task surface.
 version: 0.1.0
 author: NimbleCo
 license: MIT
