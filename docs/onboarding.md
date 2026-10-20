@@ -217,7 +217,7 @@ Two checks must pass:
    particulars for human review. A flag is not an automatic rejection; a maintainer
    decides. If you believe a flag is a false positive, say so in the PR.
 
-   **Coverage is not uniform.** The semantic layer needs `ANTHROPIC_API_KEY`, which
+   **Coverage is not uniform.** The semantic layer needs `OPENROUTER_API_KEY`, which
    GitHub does not give to PRs from forks — so on a fork PR only the deterministic
    layer runs, and a green check means "no secrets found", not "no particulars
    found". See [CONTRIBUTING.md](../CONTRIBUTING.md#sanitization).

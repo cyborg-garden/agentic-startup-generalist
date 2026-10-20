@@ -37,9 +37,9 @@ just `git pull` + restart.
 
 1. Branch from `main`.
 2. Make your change. Add tests for new behavior (`python -m pytest tests/ -v`).
-   Install dev deps first: `pip install pytest anthropic` — the engine itself is
-   stdlib-only, `pytest` runs the suite, and `anthropic` is needed only by the
-   sanitization gate's semantic layer.
+   Install dev deps first: `pip install pytest` — the engine and the
+   sanitization gate are stdlib-only (the gate's semantic layer calls OpenRouter
+   over plain HTTP), and `pytest` runs the suite.
 3. Open a PR against `main`.
 4. Both the `tests` check and the `sanitization` check must pass (or be explicitly
    cleared — see merge policy below).
@@ -62,7 +62,7 @@ flag is **not** an automatic rejection — it routes the PR to a human maintaine
 makes the call. If your PR is flagged and you believe it's clean, say so in the PR
 description; a maintainer reviews the flagged content and decides.
 
-The semantic layer needs `ANTHROPIC_API_KEY`, and this is where the gate's coverage is
+The semantic layer needs `OPENROUTER_API_KEY`, and this is where the gate's coverage is
 **not uniform**. Read this before you trust a green check:
 
 | PR origin | Deterministic layer | Semantic layer |
