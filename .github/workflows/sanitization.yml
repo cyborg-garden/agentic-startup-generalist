@@ -4,6 +4,12 @@ name: sanitization
 # flaky-blocks a contributor on unrelated pre-existing content) — the full-tree
 # audit belongs in a scheduled/gardener lane, not per-PR.
 #
+# The gate is CANONICAL: one script and one reusable workflow, both in
+# cyborg-garden/swarm-map, called below pinned to a release tag (never @main).
+# This repo keeps only sanitize.config.json. Do not vendor the script back in —
+# the per-repo copies drifted apart. Bump the pin here and GATE_TAG in
+# scripts/check_sanitization.py together (tests/test_sanitization_pin.py).
+#
 # WHAT ACTUALLY RUNS, honestly:
 #
 #   * The deterministic layer (secrets/PII) runs on EVERY PR, including PRs from
@@ -16,8 +22,10 @@ name: sanitization
 #     check means "no secrets found", NOT "no particulars found".
 #
 #   * On same-repo (trusted-branch) PRs the key IS available, so the gate runs
-#     with --require-semantic and fails CLOSED if the key is ever missing or
-#     unset, rather than silently degrading to deterministic-only.
+#     with --require-semantic and fails CLOSED if the key is ever missing,
+#     malformed, revoked or rate-limited, rather than silently degrading to
+#     deterministic-only. The two layers run as separate steps, so a red check
+#     names its own cause.
 #
 # SECURITY NOTE — accepting external contributions:
 #   Making the semantic layer run on fork PRs requires switching the trigger to
@@ -103,73 +111,29 @@ jobs:
     # is not a diff. See the header for why dispatch is the gate and the tag
     # trigger is only an alarm.
     #
-    # --require-semantic exits non-zero when OPENROUTER_API_KEY is absent, so a
-    # misconfigured secret fails the audit instead of quietly degrading to a
+    # The reusable workflow runs --require-semantic, so an absent or broken
+    # OPENROUTER_API_KEY fails the audit instead of quietly degrading to a
     # deterministic-only pass that looks identical when green.
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install deps (semantic layer + self-tests)
-        run: pip install pytest
-
-      - name: Scanner self-tests
-        run: python -m pytest tests/test_check_sanitization.py -q
-
-      - name: Full-tree audit of the release ref (fails closed)
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: python scripts/check_sanitization.py --full-tree --require-semantic
-
+    # The pinned tag MUST exist in cyborg-garden/swarm-map. If it does not, this
+    # job fails at 0s with no check shown on the PR, which can look green. Keep
+    # this repo's sanitization check REQUIRED on main so that case blocks merges.
+    uses: cyborg-garden/swarm-map/.github/workflows/sanitization-gate.yml@sanitization-gate-v1.0.0
+    with:
+      mode: full-tree
+    secrets:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   sanitize:
+    # Diff-only PR gate. Same-repo PRs: both layers, fail-closed. Fork PRs: no
+    # secret is available by design, so the deterministic layer runs and the
+    # semantic step is replaced by a loud "partial coverage" warning.
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install deps (semantic layer + self-tests)
-        run: pip install pytest
-
-      - name: Scanner self-tests (deterministic, no key needed)
-        run: python -m pytest tests/test_check_sanitization.py -q
-
-      - name: Resolve the diff against the base branch
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          set -euo pipefail
-          git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
-          git diff --name-only "origin/${BASE_REF}...HEAD" > changed.txt
-          echo "changed files:"
-          cat changed.txt
-
-      # Trusted branch: the repo secret is available, so demand the semantic
-      # layer. --require-semantic makes a missing key exit 2 instead of passing.
-      - name: Sanitization gate (both layers, fails closed)
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: |
-          set -euo pipefail
-          xargs -r -d '\n' python scripts/check_sanitization.py --require-semantic < changed.txt
-
-      # Fork PR: no secret is available to this run by design. Deterministic
-      # layer only — and say so loudly so a green check is not misread.
-      - name: Sanitization gate (DETERMINISTIC ONLY — fork PR, no secret available)
-        if: github.event.pull_request.head.repo.full_name != github.repository
-        run: |
-          set -euo pipefail
-          xargs -r -d '\n' python scripts/check_sanitization.py < changed.txt
-          echo "::warning title=Partial sanitization coverage::This PR is from a fork, so OPENROUTER_API_KEY is not available and the SEMANTIC layer did not run. Secrets and PII were checked; venture particulars were NOT. A maintainer must review this diff for particulars by hand before merging."
+    # The pinned tag MUST exist in cyborg-garden/swarm-map. If it does not, this
+    # job fails at 0s with no check shown on the PR, which can look green. Keep
+    # this repo's sanitization check REQUIRED on main so that case blocks merges.
+    uses: cyborg-garden/swarm-map/.github/workflows/sanitization-gate.yml@sanitization-gate-v1.0.0
+    with:
+      mode: pr
+    secrets:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
