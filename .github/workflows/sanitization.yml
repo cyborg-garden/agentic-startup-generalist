@@ -9,7 +9,7 @@ name: sanitization
 #   * The deterministic layer (secrets/PII) runs on EVERY PR, including PRs from
 #     forks. It needs no credentials and hard-fails on any hit.
 #
-#   * The semantic layer (venture particulars) needs ANTHROPIC_API_KEY. GitHub
+#   * The semantic layer (venture particulars) needs OPENROUTER_API_KEY. GitHub
 #     does NOT expose repository secrets to `pull_request` runs originating from
 #     a fork, so on fork PRs that layer cannot run at all. Those runs are
 #     labelled DETERMINISTIC-ONLY below and must be treated as partial: a green
@@ -24,7 +24,7 @@ name: sanitization
 #   `pull_request_target`, which runs the workflow with repository secrets in a
 #   context where the PR's own code must NOT be trusted. Done carelessly — e.g.
 #   checking out the PR head and then executing anything from it — that hands
-#   ANTHROPIC_API_KEY to arbitrary attacker-supplied code. That is a deliberate
+#   OPENROUTER_API_KEY to arbitrary attacker-supplied code. That is a deliberate
 #   maintainer decision, not a default, and it is intentionally NOT enabled here.
 #   Until it is decided, fork PRs get deterministic-only coverage and a
 #   maintainer must review particulars by hand before merging.
@@ -103,7 +103,7 @@ jobs:
     # is not a diff. See the header for why dispatch is the gate and the tag
     # trigger is only an alarm.
     #
-    # --require-semantic exits non-zero when ANTHROPIC_API_KEY is absent, so a
+    # --require-semantic exits non-zero when OPENROUTER_API_KEY is absent, so a
     # misconfigured secret fails the audit instead of quietly degrading to a
     # deterministic-only pass that looks identical when green.
     if: github.event_name != 'pull_request'
@@ -116,14 +116,14 @@ jobs:
           python-version: "3.12"
 
       - name: Install deps (semantic layer + self-tests)
-        run: pip install anthropic pytest
+        run: pip install pytest
 
       - name: Scanner self-tests
         run: python -m pytest tests/test_check_sanitization.py -q
 
       - name: Full-tree audit of the release ref (fails closed)
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: python scripts/check_sanitization.py --full-tree --require-semantic
 
 
@@ -140,7 +140,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install deps (semantic layer + self-tests)
-        run: pip install anthropic pytest
+        run: pip install pytest
 
       - name: Scanner self-tests (deterministic, no key needed)
         run: python -m pytest tests/test_check_sanitization.py -q
@@ -160,7 +160,7 @@ jobs:
       - name: Sanitization gate (both layers, fails closed)
         if: github.event.pull_request.head.repo.full_name == github.repository
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           set -euo pipefail
           xargs -r -d '\n' python scripts/check_sanitization.py --require-semantic < changed.txt
@@ -172,4 +172,4 @@ jobs:
         run: |
           set -euo pipefail
           xargs -r -d '\n' python scripts/check_sanitization.py < changed.txt
-          echo "::warning title=Partial sanitization coverage::This PR is from a fork, so ANTHROPIC_API_KEY is not available and the SEMANTIC layer did not run. Secrets and PII were checked; venture particulars were NOT. A maintainer must review this diff for particulars by hand before merging."
+          echo "::warning title=Partial sanitization coverage::This PR is from a fork, so OPENROUTER_API_KEY is not available and the SEMANTIC layer did not run. Secrets and PII were checked; venture particulars were NOT. A maintainer must review this diff for particulars by hand before merging."

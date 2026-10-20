@@ -82,7 +82,7 @@ Once source and surface are bound, the transcript → task pipeline runs on its 
 - **Two-layer sanitization gate** — deterministic regex (secrets, PII, API keys) as a
   hard-fail floor; an LLM-semantic scan for venture particulars routed to human review.
   The deterministic layer runs on every PR diff. The semantic layer needs
-  `ANTHROPIC_API_KEY`, which GitHub does not expose to PRs from forks — so on a fork PR
+  `OPENROUTER_API_KEY`, which GitHub does not expose to PRs from forks — so on a fork PR
   it cannot run, and the gate reports deterministic-only coverage instead of claiming a
   full pass. On same-repo PRs the gate runs with `--require-semantic` and fails closed if
   the key is missing. See [CONTRIBUTING.md](CONTRIBUTING.md#sanitization).
