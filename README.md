@@ -35,7 +35,7 @@ upgrade. If you want to run it yourself, everything you need is in this reposito
 
 ## Multiplayer by design
 
-This package targets [**hermes-agent-mt**](https://github.com/NimbleCoOrg/hermes-agent-mt) —
+This package targets [**hermes-agent-mt**](https://github.com/cyborg-garden/hermes-agent-mt) —
 the multi-tenant Hermes runtime — not a single-user harness. One deployment can serve many
 users and contexts (Signal DMs, group chats, tenants) at once, which is the whole reason the
 privacy model has two levels rather than one: what your *repository* shows the world, and what
