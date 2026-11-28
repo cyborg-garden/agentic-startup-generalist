@@ -56,7 +56,7 @@ content you've already customized.
 
 You need: Docker, a data directory you control, and the package image.
 
-> **Base runtime.** `ghcr.io/nimblecoorg/hermes-agent-mt` is
+> **Base runtime.** `ghcr.io/cyborg-garden/hermes-agent-mt` is
 > [`hermes-agent-mt`](https://github.com/cyborg-garden/hermes-agent-mt) — the multi-tenant
 > Hermes runtime this package is built for. It carries the per-context scoping (the
 > glocal read floor, `MemoryStore(context_id=)`) that makes one deployment safe to share
@@ -70,7 +70,7 @@ binary):
 git clone https://github.com/cyborg-garden/agentic-startup-generalist.git
 cd agentic-startup-generalist
 docker build -f docker/Dockerfile -t agentic-startup-generalist:local \
-  --build-arg BASE_IMAGE=ghcr.io/nimblecoorg/hermes-agent-mt .
+  --build-arg BASE_IMAGE=ghcr.io/cyborg-garden/hermes-agent-mt .
 ```
 
 **2. Wire up your data dir** (clones the package, seeds the soul, links the skill,
